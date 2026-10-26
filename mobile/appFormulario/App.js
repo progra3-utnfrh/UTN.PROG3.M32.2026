@@ -10,12 +10,13 @@ import {
   Platform
 } from 'react-native';
 
+/** FUNCIÓN PRINCIPAL */
 export default function App() {
   // Estado para guardar el nombre tipeado
-  const [nombre, setNombre] = useState('');
+  const [nombre, setNombre] = useState(''); // <-----  ¿Qué es esto????
   
   // Estado para controlar si ya se envió el formulario y mostrar el saludo
-  const [saludado, setSaludado] = useState(false);
+  const [saludado, setSaludado] = useState(false);   //<---- FLAG
 
   // Función al presionar el botón de Ingresar
   const handleIngresar = () => {
@@ -37,7 +38,7 @@ export default function App() {
     >
       <StatusBar barStyle="dark-content" />
 
-      {!saludado ? (
+      {!saludado ? (     //  if ( saludado.value == FALSE ) {
         /* --- PANTALLA 1: FORMULARIO --- */
         <View style={styles.card}>
           <Text style={styles.titulo}>Bienvenido/a</Text>
@@ -48,7 +49,7 @@ export default function App() {
             placeholder="Ej: Osvaldo"
             placeholderTextColor="#a0aec0"
             value={nombre}
-            onChangeText={setNombre}
+            onChangeText={setNombre}   //  onXXXXX   <----- EVENTOS
             autoCapitalize="words"
           />
 
@@ -60,7 +61,7 @@ export default function App() {
             <Text style={styles.textoBoton}>Ingresar</Text>
           </TouchableOpacity>
         </View>
-      ) : (
+      ) : (        //    }  else {
         /* --- PANTALLA 2: SALUDO --- */
         <View style={styles.card}>
           <Text style={styles.saludoEmoji}>👋</Text>
@@ -74,9 +75,10 @@ export default function App() {
             <Text style={styles.textoBoton}>Volver a iniciar</Text>
           </TouchableOpacity>
         </View>
-      )}
+      )         //      } <-- else
+      }
     </KeyboardAvoidingView>
-  );
+  );   //  <--- FIN del RETURN.
 }
 
 const styles = StyleSheet.create({
