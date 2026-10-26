@@ -1,3 +1,6 @@
+/**
+ * ESTE ES EL CÓDIGO QUE ORIGINALMENTE TRABAJAMOS EN LA CLASE #20
+ */
 import React, { useState } from 'react';
 import { 
   StyleSheet, 

@@ -5,7 +5,7 @@ dos componentes funcionales dedicados (FormularioCard y SaludoCard).
 Esta separación permite que el componente principal App se encargue
 únicamente de gestionar el estado global de la pantalla, mientras
 que cada subsistema asume la responsabilidad de rendirizar su propio
-marcado y estilos
+marcado y estilos.
  */
 import React, { useState } from 'react';
 import { 
