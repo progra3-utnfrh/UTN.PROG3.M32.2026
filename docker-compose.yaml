@@ -47,28 +47,28 @@ services:
     depends_on:
       - db
 
-  backend:
-    image: node:20-alpine
-    container_name: node-backend
-    working_dir: /usr/src/app
-    volumes:
-      - ./api:/usr/src/app
-    ports:
-      - "3000:3000"
-    command: sh -c "npm install && npm start"
-    depends_on:
-      - db
+#  backend:
+#    image: node:20-alpine
+#    container_name: node-backend
+#    working_dir: /usr/src/app
+#    volumes:
+#      - ./api:/usr/src/app
+#    ports:
+#      - "3000:3000"
+#    command: sh -c "npm install && npm start"
+#    depends_on:
+#      - db
 
-  node-dev:
-    image: node:24-slim
-    container_name: prog3_node
-    working_dir: /app
-    volumes:
-      - ./app:/app
-    # Mapeo de puertos preparado para cuando usemos Expo (8081)
-    ports:
-      - "8081:8081"
-      - "19000:19000"
-    # Mantiene el contenedor con una terminal interactiva (equivalente a -it)
-    stdin_open: true
-    tty: true
+#  node-dev:
+#    image: node:24-slim
+#    container_name: prog3_node
+#    working_dir: /app
+#    volumes:
+#      - ./app:/app
+#    # Mapeo de puertos preparado para cuando usemos Expo (8081)
+#    ports:
+#      - "8081:8081"
+#      - "19000:19000"
+#    # Mantiene el contenedor con una terminal interactiva (equivalente a -it)
+#    stdin_open: true
+#    tty: true

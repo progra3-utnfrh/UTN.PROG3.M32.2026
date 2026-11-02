@@ -1,0 +1,74 @@
+#Para correr servidores: 
+#> docker compose up -d
+services:
+
+  php:
+    image: php:8.2-fpm
+    container_name: php-fpm
+    command: sh -c "docker-php-ext-install pdo pdo_mysql && php-fpm"
+    volumes:
+      - ./:/var/www/html
+      
+  nginx:
+    image: nginx:1.24
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./configNginx/default.conf:/etc/nginx/conf.d/default.conf
+      - ./:/var/www/html
+      
+    depends_on:
+      - php
+      - db
+
+  db:
+    image: mysql:8.4.2
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: admin1234
+      MYSQL_DATABASE: datos
+      MYSQL_USER: prog3
+      MYSQL_PASSWORD: admin123
+    volumes:
+      - ./baseDatosWeb:/var/lib/mysql
+    ports:
+      - "3306:3306"
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:5.1.1
+    container_name: phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: prog3
+      PMA_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+
+  backend:
+    image: node:20-alpine
+    container_name: node-backend
+    working_dir: /usr/src/app
+    volumes:
+      - ./api:/usr/src/app
+    ports:
+      - "3000:3000"
+    command: sh -c "npm install && npm start"
+    depends_on:
+      - db
+
+  node-dev:
+    image: node:24-slim
+    container_name: prog3_node
+    working_dir: /app
+    volumes:
+      - ./app:/app
+    # Mapeo de puertos preparado para cuando usemos Expo (8081)
+    ports:
+      - "8081:8081"
+      - "19000:19000"
+    # Mantiene el contenedor con una terminal interactiva (equivalente a -it)
+    stdin_open: true
+    tty: true
