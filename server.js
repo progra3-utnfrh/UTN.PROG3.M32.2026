@@ -15,8 +15,13 @@ const pool = mysql.createPool({
 });
 // Endpoint expuesto en /api/base/
 app.get('/api/base/', (req, res) => {
-  pool.query('SELECT id, descripcion, marca, stock FROM productos01')
+ /*promesa*/ pool.query('SELECT id, descripcion, marca, stock FROM productos01')
     .then(([rows]) => {
+      
+        console.log(" ------ Vista en tabla --------------");
+        console.table(rows);
+
+
       res.json({
         status: 'success',
         data: rows
@@ -30,6 +35,58 @@ app.get('/api/base/', (req, res) => {
       });
     });
 });
+
+
+app.get('/descri', (req, res) => {
+     pool.query('SELECT descripcion FROM productos01')
+    .then(([rows]) => {
+      
+        console.log(" ------ Vista en tabla --------------");
+        console.table(rows);
+
+
+      res.json({
+        status: 'success',
+        data: rows
+      });
+    })
+    .catch(err => {
+      console.error('Error al consultar productos01:', err.message);
+      res.status(500).json({
+        status: 'error',
+        message: 'Error al consultar la base de datos'
+      });
+    });
+});
+
+
+app.get('/estoc', (req, res) => {
+     pool.query('SELECT descripcion, stock FROM productos01')
+    .then(([rows]) => {
+      
+        console.log(" ------ Vista en tabla --------------");
+        console.table(rows);
+
+
+      res.json({
+        status: 'success',
+        data: rows
+      });
+    })
+    .catch(err => {
+      console.error('Error al consultar productos01:', err.message);
+      res.status(500).json({
+        status: 'error',
+        message: 'Error al consultar la base de datos'
+      });
+    });
+});
+
+
+
+
+
+
 app.listen(3000, '0.0.0.0', () => {
-  console.log('API escuchando en el puerto 3000 (ruta /api/base/)');
+  console.log('>>> API escuchando en el puerto 3000 (ruta /api/base/)');
 });
