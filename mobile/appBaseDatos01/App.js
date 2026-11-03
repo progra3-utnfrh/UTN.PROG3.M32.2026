@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 // URL del endpoint que consulta la base de datos
 const API_URL = 'http://localhost:3000/api/base/';
+const API_URL2 = 'http://localhost:3000/descri/';
 
 export default function App() {   //  ---> int main ()
   // Estados para almacenar la lista de productos, el estado de carga y errores
@@ -19,10 +20,10 @@ export default function App() {   //  ---> int main ()
   const [error, setError] = useState(null);
 
   // Función que consulta el endpoint remoto mediante Promesas (.then / .catch)
-  const consultarProductos = () => {
+  const consultarProductos = (X) => {
     setCargando(true);
     setError(null);
-    fetch(API_URL)    //ACÁ ES DONDE SE CONECTA A LA BD Y TRAE EN STRING CON EL RESULTADO DE LA CONSULTA.
+    fetch(X)    //ACÁ ES DONDE SE CONECTA A LA BD Y TRAE EN STRING CON EL RESULTADO DE LA CONSULTA.
       .then(response => {
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
@@ -47,10 +48,9 @@ export default function App() {   //  ---> int main ()
         setCargando(false);
       });
   };
-  // useEffect ejecuta la consulta automáticamente al abrir la pantalla
-  useEffect(() => {
-    consultarProductos();
-  }, []);
+  // useEffect ejecuta la consulta automáticamente luego del primer render (indicador de cargando) al abrir la pantalla
+  useEffect(() => { consultarProductos(API_URL);   }, []);
+
   // Función encargada de dibujar cada fila de la tabla productos01
   const renderProducto = ({ item }) => {
     const sinStock = Number(item.stock) === 0;
@@ -87,11 +87,21 @@ export default function App() {   //  ---> int main ()
       ) : error ? (
         <View style={styles.centro}>
           <Text style={styles.textoError}>{error}</Text>
-          <TouchableOpacity style={styles.botonReintentar} onPress={consultarProductos}>
+          <TouchableOpacity style={styles.botonReintentar} onPress={consultarProductos(API_URL)}>
             <Text style={styles.textoBoton}>Reintentar consulta</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.botonReintentar} onPress={consultarProductos(API_URL2)}>
+            <Text style={styles.textoBoton}>Vista Reducida</Text>
           </TouchableOpacity>
         </View>
       ) : (
+          /*
+          Flatlist hace algo como esto:
+          for( int i=0; i<productos.length; i++){
+            const actual = productos[i];
+            renderProducto({item: actual, index: i});
+          }
+          */
         <FlatList
           data={productos}
           keyExtractor={(item) => item.id.toString()}

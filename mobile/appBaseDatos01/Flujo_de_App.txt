@@ -1,3 +1,6 @@
+
+FLUJOGRAMA APP.JS
+===========================================
 Para entender el flujo de App.js sin perderse, hay que tener en cuenta una regla de oro 
 en React Native: el código no se ejecuta una sola vez de arriba hacia abajo como en un script clásico,
 sino que da "dos vueltas" (dos renderizados).   
@@ -7,7 +10,7 @@ La 2ª vuelta (Re-render): Ocurre unos milisegundos después, cuando llega el JS
 desde el servidor y setProductos() junto con setCargando(false) obligan a la función App() a 
 ejecutarse de nuevo, pero ahora con los datos cargados.   
 
-Flujograma de Ejecución de App.js (Paso a Paso)Plaintext
+Flujograma de Ejecución de App.js (Paso a Paso):
 ================================================================================
 🟢 FASE 1: ARRANQUE Y 1ª VUELTA (Milisegundo 0 - Se abre la App en el teléfono)
 ================================================================================
