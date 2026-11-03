@@ -9,21 +9,23 @@ import {
   StatusBar,
   TouchableOpacity
 } from 'react-native';
-// URL del endpoint que consulta la base de datos
-const API_URL = 'http://localhost:3000/api/base/';
-const API_URL2 = 'http://localhost:3000/descri/';
 
-export default function App() {   //  ---> int main ()
+// URLs de los endpoints que consultan la base de datos
+const API_URL = 'http://192.168.1.39:3000/api/base/';
+const API_URL2 = 'http://192.168.1.39:3000/descri/';
+
+export default function App() {   // ---> int main ()
   // Estados para almacenar la lista de productos, el estado de carga y errores
   const [productos, setProductos] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
 
   // Función que consulta el endpoint remoto mediante Promesas (.then / .catch)
-  const consultarProductos = (X) => {
+  // Si no recibe parámetro X, por defecto usa API_URL
+  const consultarProductos = (X = API_URL) => {
     setCargando(true);
     setError(null);
-    fetch(X)    //ACÁ ES DONDE SE CONECTA A LA BD Y TRAE EN STRING CON EL RESULTADO DE LA CONSULTA.
+    fetch(X)    // ACÁ ES DONDE SE CONECTA A LA BD Y TRAE EN STRING CON EL RESULTADO DE LA CONSULTA.
       .then(response => {
         if (!response.ok) {
           throw new Error(`Error HTTP: ${response.status}`);
@@ -34,7 +36,7 @@ export default function App() {   //  ---> int main ()
         if (json.status === 'success') {
           setProductos(json.data);
         } else if (Array.isArray(json)) {
-// Soporte directo por si el endpoint devuelve el array de filas directamente
+          // Soporte directo por si el endpoint devuelve el array de filas directamente
           setProductos(json);
         } else {
           throw new Error(json.message || 'Formato de respuesta no reconocido');
@@ -42,43 +44,64 @@ export default function App() {   //  ---> int main ()
       })
       .catch(err => {
         console.error('Error al conectar con la base de datos:', err);
-        setError('No se pudo obtener la información desde https://progra3/api/base/');
+        setError(`No se pudo obtener la información desde ${X}`);
       })
       .finally(() => {
         setCargando(false);
       });
   };
-  // useEffect ejecuta la consulta automáticamente luego del primer render (indicador de cargando) al abrir la pantalla
-  useEffect(() => { consultarProductos(API_URL);   }, []);
+
+  // useEffect ejecuta la consulta automáticamente luego del primer render al abrir la pantalla
+  useEffect(() => { consultarProductos(API_URL); }, []);
 
   // Función encargada de dibujar cada fila de la tabla productos01
   const renderProducto = ({ item }) => {
+    const tieneStock = item.stock !== undefined;
     const sinStock = Number(item.stock) === 0;
-    return (        // JSX = JavaScript XML,   XML = eXtended Markup Language
-      <View style={styles.card}>      
-        <View style={styles.cardHeader}>
-          <Text style={styles.idTexto}>ID #{item.id}</Text>
-          <Text style={styles.marcaTexto}>{item.marca}</Text>
-        </View>
+
+    return (        // JSX = JavaScript XML, XML = eXtended Markup Language
+      <View style={styles.card}>
+        {(item.id || item.marca) && (
+          <View style={styles.cardHeader}>
+            {item.id && <Text style={styles.idTexto}>ID #{item.id}</Text>}
+            {item.marca && <Text style={styles.marcaTexto}>{item.marca}</Text>}
+          </View>
+        )}
+
         <Text style={styles.descripcionTexto}>{item.descripcion}</Text>
-        <View style={styles.cardFooter}>
-          <Text style={[
-            styles.stockBadge,
-            sinStock ? styles.sinStock : styles.conStock
-          ]}>
-            {sinStock ? 'SIN STOCK' : `Stock: ${item.stock} unidades`}
-          </Text>
-        </View>
+
+        {tieneStock && (
+          <View style={styles.cardFooter}>
+            <Text style={[
+              styles.stockBadge,
+              sinStock ? styles.sinStock : styles.conStock
+            ]}>
+              {sinStock ? 'SIN STOCK' : `Stock: ${item.stock} unidades`}
+            </Text>
+          </View>
+        )}
       </View>
     );
   };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#f0f4f8" />
       <View style={styles.encabezado}>
         <Text style={styles.titulo}>Catálogo de Productos</Text>
-        <Text style={styles.subtitulo}>Tabla: productos01 | Origen: https://progra3/api/base/</Text>
+        <Text style={styles.subtitulo}>Tabla: productos01 | Servidor: 192.168.1.39:3000</Text>
+
+        {/* Botones para alternar entre los dos endpoints en vivo */}
+        <View style={styles.filaBotones}>
+          <TouchableOpacity style={styles.botonVista} onPress={() => consultarProductos(API_URL)}>
+            <Text style={styles.textoBoton}>Vista Completa</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.botonVista} onPress={() => consultarProductos(API_URL2)}>
+            <Text style={styles.textoBoton}>Vista Reducida</Text>
+          </TouchableOpacity>
+        </View>
       </View>
+
       {cargando ? (
         <View style={styles.centro}>
           <ActivityIndicator size="large" color="#2b6cb0" />
@@ -87,27 +110,24 @@ export default function App() {   //  ---> int main ()
       ) : error ? (
         <View style={styles.centro}>
           <Text style={styles.textoError}>{error}</Text>
-          <TouchableOpacity style={styles.botonReintentar} onPress={consultarProductos(API_URL)}>
+          <TouchableOpacity style={styles.botonReintentar} onPress={() => consultarProductos(API_URL)}>
             <Text style={styles.textoBoton}>Reintentar consulta</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.botonReintentar} onPress={consultarProductos(API_URL2)}>
-            <Text style={styles.textoBoton}>Vista Reducida</Text>
           </TouchableOpacity>
         </View>
       ) : (
-          /*
-          Flatlist hace algo como esto:
-          for( int i=0; i<productos.length; i++){
-            const actual = productos[i];
-            renderProducto({item: actual, index: i});
-          }
-          */
+        /*
+        Flatlist hace algo como esto:
+        for( int i=0; i<productos.length; i++){
+          const actual = productos[i];
+          renderProducto({item: actual, index: i});
+        }
+        */
         <FlatList
           data={productos}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
           renderItem={renderProducto}
           contentContainerStyle={styles.lista}
-          onRefresh={consultarProductos}
+          onRefresh={() => consultarProductos(API_URL)}
           refreshing={cargando}
           ListEmptyComponent={
             <Text style={styles.textoEstado}>No hay productos cargados en productos01.</Text>
@@ -117,6 +137,7 @@ export default function App() {   //  ---> int main ()
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -138,6 +159,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#627d98',
     marginTop: 4,
+  },
+  filaBotones: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  botonVista: {
+    backgroundColor: '#2b6cb0',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
   },
   lista: {
     padding: 16,
@@ -173,7 +205,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#243b53',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   cardFooter: {
     flexDirection: 'row',

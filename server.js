@@ -18,6 +18,7 @@ app.get('/api/base/', (req, res) => {
  /*promesa*/ pool.query('SELECT id, descripcion, marca, stock FROM productos01')
     .then(([rows]) => {
       
+        console.log ("Conectando con: ", mysql.host );
         console.log(" ------ Vista en tabla --------------");
         console.table(rows);
 
