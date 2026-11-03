@@ -1,0 +1,156 @@
+Para entender el flujo de App.js sin perderse, hay que tener en cuenta una regla de oro 
+en React Native: el código no se ejecuta una sola vez de arriba hacia abajo como en un script clásico,
+sino que da "dos vueltas" (dos renderizados).   
+La 1ª vuelta (Montaje): Ocurre en el milisegundo cero cuando abrís la app. Como todavía no fueron 
+a buscar los datos a MySQL, dibuja la ruedita girando (ActivityIndicator).
+La 2ª vuelta (Re-render): Ocurre unos milisegundos después, cuando llega el JSON 
+desde el servidor y setProductos() junto con setCargando(false) obligan a la función App() a 
+ejecutarse de nuevo, pero ahora con los datos cargados.   
+
+Flujograma de Ejecución de App.js (Paso a Paso)Plaintext
+================================================================================
+🟢 FASE 1: ARRANQUE Y 1ª VUELTA (Milisegundo 0 - Se abre la App en el teléfono)
+================================================================================
+
+  [ INICIO: Se ejecuta function App() por 1ª vez ]
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 1. INICIALIZACIÓN DE ESTADOS (useState)                          │
+  │    • productos = []     (Arreglo vacío, aún no fuimos a MySQL)   │
+  │    • cargando  = true   (Prende la bandera de espera)            │
+  │    • error     = null   (Sin errores)                            │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 2. DECLARACIÓN DE FUNCIONES (¡No se ejecutan todavía!)           │
+  │    • Se guarda en memoria qué hace consultarProductos()          │
+  │    • Se guarda en memoria qué hace renderProducto()              │
+  │    • Se agenda useEffect() para ejecutarse DESPUÉS del return    │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 3. BLOQUE return (Evalúa las condiciones para dibujar)           │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+              ¿ cargando === true ? 
+                    │
+                   SÍ (Porque arrancó en true)
+                    │
+                    ▼
+  📱 [ PANTALLA DEL CELULAR: Dibuja <ActivityIndicator /> ]
+     ("Consultando base de datos...")
+
+
+================================================================================
+🟡 FASE 2: DISPARO ASÍNCRONO (Inmediatamente después de dibujar la 1ª pantalla)
+================================================================================
+
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 4. SE DISPARA useEffect(() => { consultarProductos() }, [])      │
+  │    Como tiene [], se ejecuta automáticamente tras el 1er dibujo  │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 5. EJECUCIÓN DE consultarProductos() -> fetch(API_URL)           │
+  │    Sale la petición HTTP por Wi-Fi hacia servidor.js -> MySQL    │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+           ┌─────────────┴──────────────────────────────┐
+           │ ¿Respondió bien el servidor (HTTP 200)?    │
+           └─────────────┬──────────────────────────────┘
+                         │
+            ┌────────────┴────────────┐
+         ✅ SÍ                      ❌ NO (Servidor apagado / Error red)
+            │                         │
+            ▼                         ▼
+  ┌─────────────────────────┐   ┌───────────────────────────────┐
+  │ .then(response => ...)  │   │ .catch(err => ...)            │
+  │ Convierte a JSON        │   │ setError('No se pudo...')     │
+  └────────────┬────────────┘   └───────────────┬───────────────┘
+               │                                │
+               ▼                                │
+  ┌─────────────────────────┐                   │
+  │ .then(json => ...)      │                   │
+  │ setProductos(json.data) │                   │
+  │ (Guarda los 6 registros)│                   │
+  └────────────┬────────────┘                   │
+               │                                │
+               └──────────────┬─────────────────┘
+                              │
+                              ▼
+               ┌─────────────────────────────┐
+               │ .finally(() => ...)         │
+               │ setCargando(false)          │
+               │ (Apaga la rueda de carga)   │
+               └──────────────┬──────────────┘
+                              │
+                              ▼
+      ⚡ ¡CAMBIÓ EL ESTADO! (setProductos / setCargando) ⚡
+      React ordena: "¡Vuelvan a ejecutar App() desde arriba!"
+
+
+================================================================================
+🔵 FASE 3: 2ª VUELTA / RE-RENDER (Con los datos de MySQL ya en memoria)
+================================================================================
+
+  [ RE-RENDER: Se ejecuta function App() por 2ª vez ]
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 6. LECTURA DE ESTADOS ACTUALIZADOS                               │
+  │    • productos = [ {id:1, ...}, {id:2, ...}, ... ] (6 elementos) │
+  │    • cargando  = false                                           │
+  │    • error     = null (o texto de error si entró al .catch)      │
+  │    *(useEffect NO vuelve a correr porque tenía corchetes [])*    │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+  ┌──────────────────────────────────────────────────────────────────┐
+  │ 7. BLOQUE return (Vuelve a evaluar los operadores ternarios ?)   │
+  └──────────────────────────────────────────────────────────────────┘
+                         │
+                         ▼
+              ¿ cargando === true ?  ──(NO, ahora es false)──┐
+                                                             ▼
+                                                  ¿ error !== null ?
+                                                     │            │
+                                                    SÍ           NO (Todo OK)
+                                                     │            │
+                                                     ▼            ▼
+  📱 [ PANTALLA DE ERROR ]  ◄────────────────────────┘     ┌────────────────────┐
+     Muestra texto rojo y                                  │ 8. <FlatList>      │
+     Botón "Reintentar"                                    │ Recibe los 6 items │
+     (Si lo tocan, vuelve                                  │ en data={productos}│
+      al PASO 5)                                           └─────────┬──────────┘
+                                                                     │
+                                                                     ▼
+                                               ┌─────────────────────────────────┐
+                                               │ BUCLE INTERNO DE FLATLIST       │
+                                               │ Por cada producto (i = 0 a 5):  │
+                                               │   Llama a renderProducto({item})│
+                                               │   Evalúa ¿stock === 0?          │
+                                               │   • Sí -> Cartel Rojo           │
+                                               │   • No -> Cartel Verde          │
+                                               └─────────────────┬───────────────┘
+                                                                 │
+                                                                 ▼
+                                               📱 [ PANTALLA FINAL DEL CELULAR ]
+                                                  Dibuja las 6 tarjetas en lista
+Los 3 "momentos clave" que muestra este diagrama:
+Por qué se declaran las funciones arriba pero se ejecutan después 
+(Paso 2):
+Cuando el intérprete de JavaScript lee const consultarProductos = () => { ... } y 
+const renderProducto = ({ item }) => { ... }, no entra a ejecutar lo que tienen adentro;
+solamente las "memoriza". 
+El puente entre la Fase 1 y la Fase 2 (useEffect en el Paso 4):
+React primero cumple con dibujar el return inicial (la ruedita girando) y, recién cuando la pantalla
+ya está visible en el teléfono, dispara el useEffect que llama a consultarProductos().
+El disparo de renderProducto recién al final de la Fase 3 (Paso 8):
+En la primera vuelta (cargando === true), <FlatList> ni siquiera existe en la pantalla, por lo que
+renderProducto no se llama ni una sola vez. Recién en la segunda vuelta, cuando cargando pasa a false, 
+el operador ternario entra por el último :, monta <FlatList> y esta llama 6 veces seguidas a renderProducto.  

@@ -38,7 +38,7 @@ app.get('/api/base/', (req, res) => {
 
 
 app.get('/descri', (req, res) => {
-     pool.query('SELECT descripcion FROM productos01')
+     pool.query('SELECT descripcion, stock FROM productos01')
     .then(([rows]) => {
       
         console.log(" ------ Vista en tabla --------------");
